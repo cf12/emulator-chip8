@@ -207,30 +207,28 @@ void Chip8::OP_8xy5() {
   EXTRACT_XY
 
   registers[0xF] = registers[Vx] > registers[Vy];
-  registers[Vx] = (uint8_t)registers[Vx] > (uint8_t)registers[Vy];
+  registers[Vx] = registers[Vx] - registers[Vy];
 }
 
 // 8xy6 - SHR Vx {, Vy}
 void Chip8::OP_8xy6() {
   EXTRACT_XY
-  registers[Vx] = registers[Vy];
   registers[0xF] = registers[Vx] & 1;
-  registers[Vx] = (registers[Vx] >> 1) & 0x0FFF;
+  registers[Vx] = registers[Vx] >> 1;
 }
 
 // 8xy7 - SUBN Vx, Vy
 void Chip8::OP_8xy7() {
   EXTRACT_XY
   registers[0xF] = registers[Vy] > registers[Vx];
-  registers[Vx] = (uint8_t)registers[Vy] > (uint8_t)registers[Vx];
+  registers[Vx] = registers[Vy] - registers[Vx];
 }
 
 // 8xyE - SHL Vx {, Vy}
 void Chip8::OP_8xyE() {
   EXTRACT_XY
-  registers[Vx] = registers[Vy];
-  registers[0xF] = (registers[Vx] >> 11) & 1;
-  registers[Vx] = (registers[Vx] << 1) & 0x0FFF;
+  registers[0xF] = (registers[Vx] >> 7) & 1;
+  registers[Vx] = registers[Vx] << 1;
 }
 
 // 9xy0 - SNE Vx, Vy
