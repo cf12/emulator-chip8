@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
                     VIDEO_HEIGHT * videoScale, VIDEO_WIDTH, VIDEO_HEIGHT);
 
   Chip8 chip8;
-    chip8.load_rom(romFilename);
+  chip8.load_rom(romFilename);
 
   int videoPitch = sizeof(chip8.video[0]) * VIDEO_WIDTH;
 
@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     if (dt > cycleDelay) {
       lastCycleTime = currentTime;
 
-        chip8.cycle();
+      chip8.cycle();
 
       platform.Update(chip8.video, videoPitch);
     }
