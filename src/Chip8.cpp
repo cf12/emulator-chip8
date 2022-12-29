@@ -1,8 +1,17 @@
-//
-// Created by cf12 on 12/28/22.
-//
-
 #include "Chip8.h"
+
+#define EXTRACT_X \
+    uint8_t Vx = (opcode & 0x0F00) >> 8;
+
+#define EXTRACT_XY \
+    EXTRACT_X \
+    uint8_t Vy = (opcode & 0x00F0) >> 4;
+
+#define EXTRACT_NNN \
+    uint16_t addr = opcode & 0x0FFF;
+
+#define EXTRACT_KK \
+    uint8_t byte = opcode & 0x00FF;
 
 void Chip8::LoadROM(string filename) {
     std::ifstream file(filename, std::ios::binary | std::ios::ate);
@@ -16,7 +25,7 @@ void Chip8::LoadROM(string filename) {
     file.seekg(0, std::ios::beg);
     file.read((char *) &memory[START_ADDRESS], size);
     file.close();
-};
+}
 
 Chip8::Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().count()) {
     // init pc to beginning of rom
@@ -25,7 +34,12 @@ Chip8::Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().cou
     // load fontset into memory
     memcpy(&memory[FONTSET_START_ADDRESS], FONTSET, FONTSET_SIZE);
 
-    // Set up function pointer table
+    // function pointer table
+    fill(begin(table0), end(table0), &Chip8::OP_NULL);
+    fill(begin(table8), end(table8), &Chip8::OP_NULL);
+    fill(begin(tableE), end(tableE), &Chip8::OP_NULL);
+    fill(begin(tableF), end(tableF), &Chip8::OP_NULL);
+
     table[0x0] = &Chip8::Table0;
     table[0x1] = &Chip8::OP_1nnn;
     table[0x2] = &Chip8::OP_2nnn;
@@ -43,12 +57,6 @@ Chip8::Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().cou
     table[0xE] = &Chip8::TableE;
     table[0xF] = &Chip8::TableF;
 
-    for (size_t i = 0; i <= 0xE; i++) {
-        table0[i] = &Chip8::OP_NULL;
-        table8[i] = &Chip8::OP_NULL;
-        tableE[i] = &Chip8::OP_NULL;
-    }
-
     table0[0x0] = &Chip8::OP_00E0;
     table0[0xE] = &Chip8::OP_00EE;
 
@@ -65,10 +73,6 @@ Chip8::Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().cou
     tableE[0x1] = &Chip8::OP_ExA1;
     tableE[0xE] = &Chip8::OP_Ex9E;
 
-    for (size_t i = 0; i <= 0x65; i++) {
-        tableF[i] = &Chip8::OP_NULL;
-    }
-
     tableF[0x07] = &Chip8::OP_Fx07;
     tableF[0x0A] = &Chip8::OP_Fx0A;
     tableF[0x15] = &Chip8::OP_Fx15;
@@ -80,21 +84,25 @@ Chip8::Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().cou
     tableF[0x65] = &Chip8::OP_Fx65;
 }
 
-void Chip8::Table0() { ((*this).*(table0[opcode & 0x000Fu]))(); }
+void Chip8::Table0() { ((*this).*(table0[opcode & 0x000F]))(); }
 
-void Chip8::Table8() { ((*this).*(table8[opcode & 0x000Fu]))(); }
+void Chip8::Table8() { ((*this).*(table8[opcode & 0x000F]))(); }
 
-void Chip8::TableE() { ((*this).*(tableE[opcode & 0x000Fu]))(); }
+void Chip8::TableE() { ((*this).*(tableE[opcode & 0x000F]))(); }
 
-void Chip8::TableF() { ((*this).*(tableF[opcode & 0x00FFu]))(); }
+void Chip8::TableF() { ((*this).*(tableF[opcode & 0x00FF]))(); }
 
-void Chip8::OP_NULL() {}
+void Chip8::OP_NULL() {
+    fprintf(stderr, "OP_NULL: %08x\n", opcode);
+}
 
 
 // 00E0 - CLS
-void Chip8::OP_00E0() { memset(video, 0, sizeof(video)); }
+void Chip8::OP_00E0() {
+    fill_n(video, sizeof(video), 0);
+}
 
-// RET
+// 00EE - RET
 void Chip8::OP_00EE() {
     sp--;
     pc = stack[sp];
@@ -107,7 +115,7 @@ void Chip8::OP_1nnn() {
     pc = addr;
 }
 
-// CALL addr
+// 2nnn - CALL addr
 void Chip8::OP_2nnn() {
     uint16_t addr = opcode & 0x0FFF;
 
@@ -116,83 +124,69 @@ void Chip8::OP_2nnn() {
     pc = addr;
 }
 
-// SE Vx, byte
+// 3xkk - SE Vx, byte
 void Chip8::OP_3xkk() {
-    uint8_t Vx = opcode >> 8;
+    uint8_t Vx = (opcode & 0x0F00) >> 8;
     uint8_t k = opcode & 0x00FF;
 
     if (registers[Vx] == k) pc += 2;
 }
 
-// SNE Vx, byte
+// 4xkk - SNE Vx, byte
 void Chip8::OP_4xkk() {
-    uint8_t Vx = opcode >> 8;
-    uint8_t byte = opcode & 0x00FFu;
+    uint8_t Vx = (opcode & 0x0F00) >> 8;
+    uint8_t byte = opcode & 0x00FF;
 
     if (registers[Vx] != byte) pc += 2;
 }
 
-// SE Vx, Vy
+// 5xy0 - SE Vx, Vy
 void Chip8::OP_5xy0() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t Vy = (opcode & 0x00F0u) >> 4u;
-
+    EXTRACT_XY
     if (registers[Vx] == registers[Vy]) pc += 2;
 }
 
 // 6xkk - LD Vx, byte
 void Chip8::OP_6xkk() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t byte = opcode & 0x00FFu;
-
+    EXTRACT_X
+    EXTRACT_KK
     registers[Vx] = byte;
 }
 
 // 7xkk - ADD Vx, byte
 void Chip8::OP_7xkk() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t byte = opcode & 0x00FFu;
-
+    EXTRACT_X
+    EXTRACT_KK
     registers[Vx] += byte;
 }
 
 // 8xy0 - LD Vx, Vy
 void Chip8::OP_8xy0() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t Vy = (opcode & 0x00F0u) >> 4u;
-
+    EXTRACT_XY
     registers[Vx] = registers[Vy];
 }
 
 // 8xy1 - OR Vx, Vy
 void Chip8::OP_8xy1() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t Vy = (opcode & 0x00F0u) >> 4u;
-
+    EXTRACT_XY
     registers[Vx] |= registers[Vy];
 }
 
 // 8xy2 - AND Vx, Vy
 void Chip8::OP_8xy2() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t Vy = (opcode & 0x00F0u) >> 4u;
-
+    EXTRACT_XY
     registers[Vx] &= registers[Vy];
 }
 
 // 8xy3 - XOR Vx, Vy
 void Chip8::OP_8xy3() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t Vy = (opcode & 0x00F0u) >> 4u;
-
+    EXTRACT_XY
     registers[Vx] ^= registers[Vy];
 }
 
 // 8xy4 - ADD Vx, Vy
 void Chip8::OP_8xy4() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t Vy = (opcode & 0x00F0u) >> 4u;
-
+    EXTRACT_XY
     uint16_t sum = registers[Vx] + registers[Vy];
 
     // set carry bit
@@ -204,10 +198,9 @@ void Chip8::OP_8xy4() {
 
 // 8xy5 - SUB Vx, Vy
 void Chip8::OP_8xy5() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t Vy = (opcode & 0x00F0u) >> 4u;
-
+    EXTRACT_XY
     uint16_t diff = registers[Vx] - registers[Vy];
+
     // if Vx > Vy = Vx - Vy > 0, then we set borrow bit
     registers[0xF] = diff > 0;
     registers[Vx] = diff;
@@ -215,7 +208,7 @@ void Chip8::OP_8xy5() {
 
 // 8xy6 - SHR Vx {, Vy}
 void Chip8::OP_8xy6() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+    EXTRACT_X
 
     registers[0xF] = registers[Vx] & 1;
     registers[Vx] >>= 1;
@@ -223,8 +216,7 @@ void Chip8::OP_8xy6() {
 
 // 8xy7 - SUBN Vx, Vy
 void Chip8::OP_8xy7() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+    EXTRACT_XY
 
     uint16_t diff = registers[Vy] - registers[Vx];
     // if Vy > Vx = Vy - Vx > 0, then we set borrow bit
@@ -234,46 +226,39 @@ void Chip8::OP_8xy7() {
 
 // 8xyE - SHL Vx {, Vy}
 void Chip8::OP_8xyE() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-
+    EXTRACT_X
     registers[0xF] = (registers[Vx] >> 11) & 1;
     registers[Vx] <<= 1;
 }
 
 // 9xy0 - SNE Vx, Vy
 void Chip8::OP_9xy0() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t Vy = (opcode & 0x00F0u) >> 4u;
-
+    EXTRACT_XY
     if (registers[Vx] != registers[Vy]) pc += 2;
 }
 
 // Annn - LD I, addr
 void Chip8::OP_Annn() {
-    uint16_t addr = opcode & 0x0FFF;
-
+    EXTRACT_NNN
     index = addr;
 }
 
 // Bnnn - JP V0, addr
 void Chip8::OP_Bnnn() {
-    uint16_t addr = opcode & 0x0FFF;
-
+    EXTRACT_NNN
     pc = registers[0x0] + addr;
 }
 
 // Cxkk - RND Vx, byte
 void Chip8::OP_Cxkk() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
-    uint8_t byte = opcode & 0x00FF;
-
+    EXTRACT_X
+    EXTRACT_KK
     registers[Vx] = randByte(randGen) & byte;
 }
 
 // Dxyn - DRW Vx, Vy, nibble
 void Chip8::OP_Dxyn() {
-    uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-    uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+    EXTRACT_XY
     uint8_t height = opcode & 0x000Fu;
 
     uint8_t x = registers[Vx] % VIDEO_WIDTH;
@@ -301,29 +286,27 @@ void Chip8::OP_Dxyn() {
 
 // Ex9E - SKP Vx
 void Chip8::OP_Ex9E() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
+    EXTRACT_X
     uint8_t key = registers[Vx];
     if (keypad[key]) pc += 2;
 }
 
 // ExA1 - SKNP Vx
 void Chip8::OP_ExA1() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
+    EXTRACT_X
     uint8_t key = registers[Vx];
     if (!keypad[key]) pc += 2;
 }
 
 // Fx07 - LD Vx, DT
 void Chip8::OP_Fx07() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
-
+    EXTRACT_X
     registers[Vx] = delayTimer;
 }
 
 // Fx0A - LD Vx, K
 void Chip8::OP_Fx0A() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
-
+    EXTRACT_X
     if (keypad[0])
         registers[Vx] = 0;
     else if (keypad[1])
@@ -362,28 +345,25 @@ void Chip8::OP_Fx0A() {
 
 // Fx15 - LD DT, Vx
 void Chip8::OP_Fx15() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
-
+    EXTRACT_X
     delayTimer = registers[Vx];
 }
 
 // Fx18 - LD ST, Vx
 void Chip8::OP_Fx18() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
-
+    EXTRACT_X
     soundTimer = registers[Vx];
 }
 
 // Fx1E - ADD I, Vx
 void Chip8::OP_Fx1E() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
-
+    EXTRACT_X
     index += registers[Vx];
 }
 
 // Fx29 - LD F, Vx
 void Chip8::OP_Fx29() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
+    EXTRACT_X
     uint16_t digit = registers[Vx];
 
     index = FONTSET_START_ADDRESS + digit * 5;
@@ -391,7 +371,7 @@ void Chip8::OP_Fx29() {
 
 // Fx33 - LD B, Vx
 void Chip8::OP_Fx33() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
+    EXTRACT_X
     uint16_t value = registers[Vx];
 
     memory[index + 2] = value % 10;
@@ -403,7 +383,7 @@ void Chip8::OP_Fx33() {
 
 // Fx55 - LD [I], Vx
 void Chip8::OP_Fx55() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
+    EXTRACT_X
 
     for (int v = 0; v <= Vx; v++) {
         memory[index + v] = registers[v];
@@ -412,7 +392,7 @@ void Chip8::OP_Fx55() {
 
 // Fx65 - LD Vx, [I]
 void Chip8::OP_Fx65() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
+    EXTRACT_X
 
     for (int v = 0; v <= Vx; v++) {
         registers[v] = memory[index + v];
@@ -420,68 +400,20 @@ void Chip8::OP_Fx65() {
 }
 
 void Chip8::Cycle() {
-    // Fetch
+    // fetch
     opcode = (memory[pc] << 8u) | memory[pc + 1];
     pc += 2;
 
-    // Decode and Execute
-//    ((*this).*(table[(opcode & 0xF000u) >> 12u]))();
+    // decode + execute
+    ((*this).*(table[opcode >> 12u]))();
 
-    printf("%08x %08x\n", opcode >> 12, opcode);
+//    printf("%08x %08x\n", opcode >> 12, opcode);
 
-    switch (opcode >> 12) {
-        case 0x0:
-            switch (opcode) {
-                case (0x00E0): OP_00E0(); break;
-                case (0x00EE): OP_00EE(); break;
-            }
-        case 0x1: OP_1nnn(); break;
-        case 0x2: OP_2nnn(); break;
-        case 0x3: OP_3xkk(); break;
-        case 0x4: OP_4xkk(); break;
-        case 0x5: OP_5xy0(); break;
-        case 0x6: OP_6xkk(); break;
-        case 0x7: OP_7xkk(); break;
-        case 0x8:
-            switch (opcode & 0x000F) {
-                case 0x0: OP_8xy0(); break;
-                case 0x1: OP_8xy1(); break;
-                case 0x2: OP_8xy2(); break;
-                case 0x3: OP_8xy3(); break;
-                case 0x4: OP_8xy4(); break;
-                case 0x5: OP_8xy5(); break;
-            }
-        case 0x9: OP_9xy0(); break;
-        case 0xA: OP_Annn(); break;
-        case 0xB: OP_Bnnn(); break;
-        case 0xC: OP_Cxkk(); break;
-        case 0xD: OP_Dxyn(); break;
-        case 0xE:
-            switch (opcode & 0x00FF) {
-                case 0x9E: OP_Ex9E(); break;
-                case 0xA1: OP_ExA1(); break;
-            }
-        case 0xF:
-            switch (opcode & 0x00FF) {
-                case 0x07: OP_Fx07(); break;
-                case 0x15: OP_Fx15(); break;
-                case 0x18: OP_Fx18(); break;
-                case 0x1E: OP_Fx1E(); break;
-                case 0x0A: OP_Fx0A(); break;
-                case 0x29: OP_Fx29(); break;
-                case 0x33: OP_Fx33(); break;
-                case 0x55: OP_Fx55(); break;
-                case 0x65: OP_Fx65(); break;
-            }
-        default:
-            fprintf(stderr, "INVALID INSTRUCTION: %x\n", opcode);
-    }
-
-    // Decrement the delay timer if it's been set
+    // decrement delayTimer if set
     if (delayTimer > 0)
         --delayTimer;
 
-    // Decrement the sound timer if it's been set
+    // decrement soundTimer if set
     if (soundTimer > 0)
         --soundTimer;
 }

@@ -1,7 +1,3 @@
-//
-// Created by cf12 on 12/28/22.
-//
-
 #include "Platform.h"
 
 Platform::Platform(const char *title, int windowWidth, int windowHeight, int textureWidth, int textureHeight) {
