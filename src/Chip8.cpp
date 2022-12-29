@@ -13,25 +13,12 @@
 #define EXTRACT_KK \
     uint8_t byte = opcode & 0x00FF;
 
-void Chip8::LoadROM(string filename) {
-    std::ifstream file(filename, std::ios::binary | std::ios::ate);
-    std::streamsize size = file.tellg();
-
-    if (size == -1) {
-        std::cerr << "Error loading file" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-
-    file.seekg(0, std::ios::beg);
-    file.read((char *) &memory[START_ADDRESS], size);
-    file.close();
-}
 
 Chip8::Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().count()) {
     // init pc to beginning of rom
     pc = START_ADDRESS;
 
-    // load fontset into memory
+    // load_rom fontset into memory
     memcpy(&memory[FONTSET_START_ADDRESS], FONTSET, FONTSET_SIZE);
 
     // function pointer table
@@ -84,6 +71,39 @@ Chip8::Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().cou
     tableF[0x65] = &Chip8::OP_Fx65;
 }
 
+void Chip8::load_rom(string filename) {
+    std::ifstream file(filename, std::ios::binary | std::ios::ate);
+    std::streamsize size = file.tellg();
+
+    if (size == -1) {
+        std::cerr << "Error loading file" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    file.seekg(0, std::ios::beg);
+    file.read((char *) &memory[START_ADDRESS], size);
+    file.close();
+}
+
+void Chip8::cycle() {
+    // fetch
+    opcode = (memory[pc] << 8u) | memory[pc + 1];
+    pc += 2;
+
+    // decode + execute
+    ((*this).*(table[opcode >> 12u]))();
+
+//    printf("%08x %08x\n", opcode >> 12, opcode);
+
+    // decrement delayTimer if set
+    if (delayTimer > 0)
+        --delayTimer;
+
+    // decrement soundTimer if set
+    if (soundTimer > 0)
+        --soundTimer;
+}
+
 void Chip8::Table0() { ((*this).*(table0[opcode & 0x000F]))(); }
 
 void Chip8::Table8() { ((*this).*(table8[opcode & 0x000F]))(); }
@@ -99,7 +119,7 @@ void Chip8::OP_NULL() {
 
 // 00E0 - CLS
 void Chip8::OP_00E0() {
-    fill_n(video, sizeof(video), 0);
+    fill(begin(video), end(video), 0);
 }
 
 // 00EE - RET
@@ -110,15 +130,13 @@ void Chip8::OP_00EE() {
 
 // 1nnn - JP addr
 void Chip8::OP_1nnn() {
-    uint16_t addr = opcode & 0x0FFF;
-
+    EXTRACT_NNN
     pc = addr;
 }
 
 // 2nnn - CALL addr
 void Chip8::OP_2nnn() {
-    uint16_t addr = opcode & 0x0FFF;
-
+    EXTRACT_NNN
     stack[sp] = pc;
     sp++;
     pc = addr;
@@ -126,17 +144,15 @@ void Chip8::OP_2nnn() {
 
 // 3xkk - SE Vx, byte
 void Chip8::OP_3xkk() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
-    uint8_t k = opcode & 0x00FF;
-
-    if (registers[Vx] == k) pc += 2;
+    EXTRACT_X
+    EXTRACT_KK
+    if (registers[Vx] == byte) pc += 2;
 }
 
 // 4xkk - SNE Vx, byte
 void Chip8::OP_4xkk() {
-    uint8_t Vx = (opcode & 0x0F00) >> 8;
-    uint8_t byte = opcode & 0x00FF;
-
+    EXTRACT_X
+    EXTRACT_KK
     if (registers[Vx] != byte) pc += 2;
 }
 
@@ -199,36 +215,32 @@ void Chip8::OP_8xy4() {
 // 8xy5 - SUB Vx, Vy
 void Chip8::OP_8xy5() {
     EXTRACT_XY
-    uint16_t diff = registers[Vx] - registers[Vy];
 
-    // if Vx > Vy = Vx - Vy > 0, then we set borrow bit
-    registers[0xF] = diff > 0;
-    registers[Vx] = diff;
+    registers[0xF] = registers[Vx] > registers[Vy];
+    registers[Vx] = (uint8_t) registers[Vx] > (uint8_t) registers[Vy];
 }
 
 // 8xy6 - SHR Vx {, Vy}
 void Chip8::OP_8xy6() {
-    EXTRACT_X
-
+    EXTRACT_XY
+    registers[Vx] = registers[Vy];
     registers[0xF] = registers[Vx] & 1;
-    registers[Vx] >>= 1;
+    registers[Vx] = (registers[Vx] >> 1) & 0x0FFF;
 }
 
 // 8xy7 - SUBN Vx, Vy
 void Chip8::OP_8xy7() {
     EXTRACT_XY
-
-    uint16_t diff = registers[Vy] - registers[Vx];
-    // if Vy > Vx = Vy - Vx > 0, then we set borrow bit
-    registers[0xF] = diff > 0;
-    registers[Vx] = diff;
+    registers[0xF] = registers[Vy] > registers[Vx];
+    registers[Vx] = (uint8_t) registers[Vy] > (uint8_t) registers[Vx];
 }
 
 // 8xyE - SHL Vx {, Vy}
 void Chip8::OP_8xyE() {
-    EXTRACT_X
+    EXTRACT_XY
+    registers[Vx] = registers[Vy];
     registers[0xF] = (registers[Vx] >> 11) & 1;
-    registers[Vx] <<= 1;
+    registers[Vx] = (registers[Vx] << 1) & 0x0FFF;
 }
 
 // 9xy0 - SNE Vx, Vy
@@ -307,40 +319,15 @@ void Chip8::OP_Fx07() {
 // Fx0A - LD Vx, K
 void Chip8::OP_Fx0A() {
     EXTRACT_X
-    if (keypad[0])
-        registers[Vx] = 0;
-    else if (keypad[1])
-        registers[Vx] = 1;
-    else if (keypad[2])
-        registers[Vx] = 2;
-    else if (keypad[3])
-        registers[Vx] = 3;
-    else if (keypad[4])
-        registers[Vx] = 4;
-    else if (keypad[5])
-        registers[Vx] = 5;
-    else if (keypad[6])
-        registers[Vx] = 6;
-    else if (keypad[7])
-        registers[Vx] = 7;
-    else if (keypad[8])
-        registers[Vx] = 8;
-    else if (keypad[9])
-        registers[Vx] = 9;
-    else if (keypad[10])
-        registers[Vx] = 10;
-    else if (keypad[11])
-        registers[Vx] = 11;
-    else if (keypad[12])
-        registers[Vx] = 12;
-    else if (keypad[13])
-        registers[Vx] = 13;
-    else if (keypad[14])
-        registers[Vx] = 14;
-    else if (keypad[15])
-        registers[Vx] = 15;
-    else
-        pc -= 2;
+
+    for (int i = 0; i < 16; i++) {
+        if (keypad[i]) {
+            registers[Vx] = i;
+            return;
+        }
+    }
+
+    pc -= 2;
 }
 
 // Fx15 - LD DT, Vx
@@ -399,23 +386,5 @@ void Chip8::OP_Fx65() {
     }
 }
 
-void Chip8::Cycle() {
-    // fetch
-    opcode = (memory[pc] << 8u) | memory[pc + 1];
-    pc += 2;
-
-    // decode + execute
-    ((*this).*(table[opcode >> 12u]))();
-
-//    printf("%08x %08x\n", opcode >> 12, opcode);
-
-    // decrement delayTimer if set
-    if (delayTimer > 0)
-        --delayTimer;
-
-    // decrement soundTimer if set
-    if (soundTimer > 0)
-        --soundTimer;
-}
 
 

@@ -60,9 +60,9 @@ public:
 
     Chip8();
 
-    void LoadROM(string filename);
+    void load_rom(string filename);
 
-    void Cycle();
+    void cycle();
 
     typedef void (Chip8::*Chip8Func)();
 
