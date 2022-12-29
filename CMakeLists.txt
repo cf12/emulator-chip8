@@ -8,8 +8,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 
 find_package(SDL2 REQUIRED)
-
-add_executable(EmulatorChip8 main.cpp)
+add_executable(EmulatorChip8 src/main.cpp src/Chip8.cpp src/Chip8.h src/Platform.cpp src/Platform.h)
 
 target_link_libraries(${PROJECT_NAME} ${SDL2_LIBRARIES})
 include_directories(${SDL2_INCLUDE_DIRS})
