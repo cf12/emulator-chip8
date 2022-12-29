@@ -375,9 +375,9 @@ void Chip8::OP_Fx33() {
     uint16_t value = registers[Vx];
 
     memory[index + 2] = value % 10;
-    index /= 10;
+    value /= 10;
     memory[index + 1] = value % 10;
-    index /= 10;
+    value /= 10;
     memory[index] = value % 10;
 }
 
