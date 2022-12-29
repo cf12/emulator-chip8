@@ -1,0 +1,12 @@
+{
+  "cmake.debugConfig": {
+      "args": [
+          "10",
+          "1",
+          "../roms/test_opcode.ch8"
+      ]
+  },
+  "files.associations": {
+    "chrono": "cpp"
+  }
+}
