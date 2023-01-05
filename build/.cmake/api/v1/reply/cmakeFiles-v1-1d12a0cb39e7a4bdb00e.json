@@ -147,19 +147,6 @@
 			"path" : "/opt/homebrew/Cellar/cmake/3.25.1/share/cmake/Modules/CMakeCommonLanguageInclude.cmake"
 		},
 		{
-			"isExternal" : true,
-			"path" : "/opt/homebrew/lib/cmake/SDL2/sdl2-config-version.cmake"
-		},
-		{
-			"isExternal" : true,
-			"path" : "/opt/homebrew/lib/cmake/SDL2/sdl2-config.cmake"
-		},
-		{
-			"isCMake" : true,
-			"isExternal" : true,
-			"path" : "/opt/homebrew/Cellar/cmake/3.25.1/share/cmake/Modules/FeatureSummary.cmake"
-		},
-		{
 			"isCMake" : true,
 			"isExternal" : true,
 			"path" : "/opt/homebrew/Cellar/cmake/3.25.1/share/cmake/Modules/CPack.cmake"

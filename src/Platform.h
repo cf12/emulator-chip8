@@ -1,7 +1,7 @@
 #ifndef EMULATORCHIP8_PLATFORM_H
 #define EMULATORCHIP8_PLATFORM_H
 
-#include <SDL.h>
+// #include <SDL.h>
 
 class Platform {
  public:
