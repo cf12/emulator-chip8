@@ -147,6 +147,37 @@
 			"path" : "/opt/homebrew/Cellar/cmake/3.25.1/share/cmake/Modules/CMakeCommonLanguageInclude.cmake"
 		},
 		{
+			"isExternal" : true,
+			"path" : "/opt/homebrew/lib/cmake/glfw3/glfw3ConfigVersion.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/opt/homebrew/lib/cmake/glfw3/glfw3Config.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/opt/homebrew/lib/cmake/glfw3/glfw3Targets.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/opt/homebrew/lib/cmake/glfw3/glfw3Targets-release.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/opt/homebrew/Cellar/cmake/3.25.1/share/cmake/Modules/FindOpenGL.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/opt/homebrew/Cellar/cmake/3.25.1/share/cmake/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/opt/homebrew/Cellar/cmake/3.25.1/share/cmake/Modules/FindPackageMessage.cmake"
+		},
+		{
 			"isCMake" : true,
 			"isExternal" : true,
 			"path" : "/opt/homebrew/Cellar/cmake/3.25.1/share/cmake/Modules/CPack.cmake"
