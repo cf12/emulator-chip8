@@ -48,7 +48,7 @@ class Chip8 {
   uint8_t delayTimer{};
   uint8_t soundTimer{};
   uint8_t keypad[16]{};
-  uint32_t video[64 * 32]{};
+  uint32_t video[VIDEO_WIDTH * VIDEO_HEIGHT]{};
   uint16_t opcode{};
 
   std::default_random_engine randGen;
@@ -107,6 +107,8 @@ class Chip8 {
   void OP_Fx33();
   void OP_Fx55();
   void OP_Fx65();
+
+  void draw();
 };
 
 #endif  // EMULATORCHIP8_CHIP8_H

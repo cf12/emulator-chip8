@@ -1,5 +1,9 @@
 #include "Chip8.h"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #define EXTRACT_X uint8_t Vx = (opcode & 0x0F00) >> 8;
 
 #define EXTRACT_XY \
@@ -371,5 +375,23 @@ void Chip8::OP_Fx65() {
 
   for (int v = 0; v <= Vx; v++) {
     registers[v] = memory[index + v];
+  }
+}
+
+void Chip8::draw() {
+  ImDrawList *draw_list = ImGui::GetWindowDrawList();
+  const ImVec2 pos = ImGui::GetCursorScreenPos();
+  float sz = 10;
+
+  for (int x = 0; x < VIDEO_WIDTH; x++) {
+    for (int y = 0; y < VIDEO_HEIGHT; y++) {
+      if (video[y * VIDEO_WIDTH + x]) {
+        float upper_left = pos.x + x * sz;
+        float lower_right = pos.y + y * sz;
+        draw_list->AddRectFilled(ImVec2(upper_left, lower_right),
+                                 ImVec2(upper_left + sz, lower_right + sz),
+                                 ImColor(255, 255, 255));
+      }
+    }
   }
 }
