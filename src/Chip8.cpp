@@ -1,5 +1,7 @@
 #include "Chip8.h"
 
+#include <GLFW/glfw3.h>
+
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -379,19 +381,65 @@ void Chip8::OP_Fx65() {
 }
 
 void Chip8::draw() {
-  ImDrawList *draw_list = ImGui::GetWindowDrawList();
-  const ImVec2 pos = ImGui::GetCursorScreenPos();
-  float sz = 10;
+  // ImDrawList *draw_list = ImGui::GetWindowDrawList();
+  // const ImVec2 pos = ImGui::GetCursorScreenPos();
+  // float sz = 10;
+
+  // for (int x = 0; x < VIDEO_WIDTH; x++) {
+  //   for (int y = 0; y < VIDEO_HEIGHT; y++) {
+  //     if (video[y * VIDEO_WIDTH + x]) {
+  //       float upper_left = pos.x + x * sz;
+  //       float lower_right = pos.y + y * sz;
+  //       draw_list->AddRectFilled(ImVec2(upper_left, lower_right),
+  //                                ImVec2(upper_left + sz, lower_right + sz),
+  //                                ImColor(255, 255, 255));
+  //     }
+  //   }
+  // }
+
+  GLuint displayTexture;
+  glGenTextures(1, &displayTexture);
+  glBindTexture(GL_TEXTURE_2D, displayTexture);
+
+  GLubyte displayPixels[VIDEO_HEIGHT * VIDEO_WIDTH * 3];
+
+  int DISPLAY_SCALE = 20;
+
+  ImGui::Begin("Display", NULL,
+               ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+                   ImGuiWindowFlags_NoTitleBar);
+
+  ImGui::SetWindowSize(
+      ImVec2(32 + (64 * DISPLAY_SCALE), 48 + (32 * DISPLAY_SCALE)));
+
+  GLubyte fg[3] = {
+      static_cast<GLubyte>(255),
+      static_cast<GLubyte>(255),
+      static_cast<GLubyte>(255),
+  };
+  GLubyte bg[3] = {
+      static_cast<GLubyte>(0),
+      static_cast<GLubyte>(0),
+      static_cast<GLubyte>(0),
+  };
 
   for (int x = 0; x < VIDEO_WIDTH; x++) {
     for (int y = 0; y < VIDEO_HEIGHT; y++) {
-      if (video[y * VIDEO_WIDTH + x]) {
-        float upper_left = pos.x + x * sz;
-        float lower_right = pos.y + y * sz;
-        draw_list->AddRectFilled(ImVec2(upper_left, lower_right),
-                                 ImVec2(upper_left + sz, lower_right + sz),
-                                 ImColor(255, 255, 255));
+      for (int j = 0; j < 3; j++) {
+        auto pixel = video[y * VIDEO_WIDTH + x] ? fg : bg;
+
+        displayPixels[x * 3 + y] = pixel[j];
       }
     }
   }
+
+  // Render it onto the opengl texture
+  // glBindTexture(GL_TEXTURE_2D, displayTexture);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, VIDEO_WIDTH, VIDEO_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE,
+               displayPixels);
+  glBindTexture(GL_TEXTURE_2D, 0);
+
+  // ImGui::Image((void *)(intptr_t)displayTexture,
+  //              ImVec2(64 * DISPLAY_SCALE, 32 * DISPLAY_SCALE));
+  ImGui::End();
 }

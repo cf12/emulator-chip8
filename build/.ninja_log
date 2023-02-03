@@ -1,0 +1,24 @@
+# ninja log v5
+3	1587	6971090027085260	CMakeFiles/EmulatorChip8.dir/src/main.cpp.obj	43c9453f5cb8faad
+6	1622	6971090027425265	CMakeFiles/EmulatorChip8.dir/src/Chip8.cpp.obj	3aefeb409a805ad9
+18	1975	6971090030925253	CMakeFiles/EmulatorChip8.dir/lib/imgui/imgui_demo.cpp.obj	e02e780ba2c5ba39
+11	2152	6971090032759680	CMakeFiles/EmulatorChip8.dir/lib/imgui/backends/imgui_impl_opengl3.cpp.obj	e9229cd500be607
+20	2525	6971090036474059	CMakeFiles/EmulatorChip8.dir/lib/imgui/imgui_tables.cpp.obj	ed1a290c0d328c43
+8	2860	6971090039842047	CMakeFiles/EmulatorChip8.dir/lib/imgui/backends/imgui_impl_glfw.cpp.obj	46c0ab8109b51ece
+15	3129	6971090042527554	CMakeFiles/EmulatorChip8.dir/lib/imgui/imgui_draw.cpp.obj	75a850201f789914
+22	3363	6971090044868664	CMakeFiles/EmulatorChip8.dir/lib/imgui/imgui_widgets.cpp.obj	9bab1f33a019dda9
+13	4199	6971090053186841	CMakeFiles/EmulatorChip8.dir/lib/imgui/imgui.cpp.obj	1f3fe206db390d45
+4199	4829	6971090059479436	EmulatorChip8.exe	856faf6c64fcfcab
+4	540	6971144898978461	CMakeFiles/EmulatorChip8.dir/src/Chip8.cpp.obj	3aefeb409a805ad9
+541	914	6971144902675675	EmulatorChip8.exe	856faf6c64fcfcab
+11	601	6971145301671568	CMakeFiles/EmulatorChip8.dir/src/Chip8.cpp.obj	3aefeb409a805ad9
+601	1383	6971145309451439	EmulatorChip8.exe	856faf6c64fcfcab
+12	533	6971145814830150	CMakeFiles/EmulatorChip8.dir/src/Chip8.cpp.obj	3aefeb409a805ad9
+533	1308	6971145822548528	EmulatorChip8.exe	856faf6c64fcfcab
+14	554	6971145981579487	CMakeFiles/EmulatorChip8.dir/src/Chip8.cpp.obj	3aefeb409a805ad9
+554	1036	6971145986359275	EmulatorChip8.exe	856faf6c64fcfcab
+12	599	6971146083215221	CMakeFiles/EmulatorChip8.dir/src/Chip8.cpp.obj	3aefeb409a805ad9
+11	341	6971146112973494	EmulatorChip8.exe	856faf6c64fcfcab
+9	582	6971146281750051	CMakeFiles/EmulatorChip8.dir/src/Chip8.cpp.obj	3aefeb409a805ad9
+5	578	6971146378872071	CMakeFiles/EmulatorChip8.dir/src/Chip8.cpp.obj	3aefeb409a805ad9
+578	1149	6971146384546211	EmulatorChip8.exe	856faf6c64fcfcab

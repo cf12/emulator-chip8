@@ -2,7 +2,10 @@
 	"artifacts" : 
 	[
 		{
-			"path" : "EmulatorChip8"
+			"path" : "EmulatorChip8.exe"
+		},
+		{
+			"path" : "EmulatorChip8.pdb"
 		}
 	],
 	"backtrace" : 1,
@@ -55,31 +58,28 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : "-g -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk"
+					"fragment" : "-g"
 				},
 				{
 					"fragment" : "-std=gnu++17"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 2,
+					"define" : "GLFW_DLL"
 				}
 			],
 			"includes" : 
 			[
 				{
 					"backtrace" : 4,
-					"path" : "/Users/cf12/Code/emulator-chip8/lib/imgui"
+					"path" : "D:/code/emulator-chip8/lib/imgui"
 				},
 				{
 					"backtrace" : 4,
-					"path" : "/Users/cf12/Code/emulator-chip8/lib/imgui/backends"
-				},
-				{
-					"backtrace" : 2,
-					"isSystem" : true,
-					"path" : "/opt/homebrew/include"
-				},
-				{
-					"backtrace" : 3,
-					"isSystem" : true,
-					"path" : "/Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/System/Library/Frameworks/OpenGL.framework"
+					"path" : "D:/code/emulator-chip8/lib/imgui/backends"
 				}
 			],
 			"language" : "CXX",
@@ -119,24 +119,24 @@
 				"role" : "flags"
 			},
 			{
-				"fragment" : "-Wl,-rpath,/opt/homebrew/lib",
-				"role" : "libraries"
-			},
-			{
 				"backtrace" : 2,
-				"fragment" : "/opt/homebrew/lib/libglfw.3.3.dylib",
+				"fragment" : "C:\\msys64\\mingw64\\lib\\libglfw3.dll.a",
 				"role" : "libraries"
 			},
 			{
 				"backtrace" : 3,
-				"fragment" : "/Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk/System/Library/Frameworks/OpenGL.framework/OpenGL.tbd",
+				"fragment" : "-lopengl32",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32",
 				"role" : "libraries"
 			}
 		],
 		"language" : "CXX"
 	},
 	"name" : "EmulatorChip8",
-	"nameOnDisk" : "EmulatorChip8",
+	"nameOnDisk" : "EmulatorChip8.exe",
 	"paths" : 
 	{
 		"build" : ".",
